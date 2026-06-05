@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  smoke-test:
+    name: Smoke test on Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check source files compile
+        run: |
+          python -m compileall data src
+
+      - name: Generate synthetic dataset
+        run: |
+          python data/generate_ratings.py --users 200 --movies 300 --seed 42 --outdir data
+
+      - name: Run recommender workflow
+        run: |
+          python src/build_recommender.py --ratings data/ratings.csv --movies data/movies.csv --outdir outputs --k 10 --alpha 0.6 --seed 42
+
+      - name: Verify expected outputs
+        run: |
+          test -f outputs/metrics.json
+          test -f outputs/ratings_hist.png
+          test -f outputs/top_movies.png
+          test -f outputs/recs_user_1.txt
+          test -f outputs/recs_user_2.txt
+          test -f outputs/recs_user_3.txt
+
+      - name: Upload generated outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: movie-recommendation-outputs-python-${{ matrix.python-version }}
+          path: outputs/
