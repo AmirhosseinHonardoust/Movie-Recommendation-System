@@ -7,7 +7,12 @@ Movie recommendation system with Python. Implements content-based filtering (TF-
 - Synthetic ratings dataset with users, movies, and multi-label genres
 - Content-based: TF‑IDF on genres + item–item cosine similarity
 - Collaborative: user–item matrix factorization (TruncatedSVD)
+<<<<<<< HEAD
+- KNN: item-based nearest neighbors recommendation
+- Hybrid: weighted combination of content, collaborative, and KNN scores
+=======
 - Hybrid: weighted combination of content & collaborative scores
+>>>>>>> 81fb6d98d82d9e37ed32e8b71c93cb78a568f321
 - Evaluation: Precision@K, Recall@K, NDCG@K (per-user & macro)
 - Visuals: rating distribution, top movies, sample recommendations
 - Outputs: metrics JSON, recommendation files, and charts
@@ -53,11 +58,24 @@ python data/generate_ratings.py --users 800 --movies 1200 --seed 42 --outdir dat
 
 ## Train, Evaluate & Recommend
 ```bash
+<<<<<<< HEAD
+python src/build_recommender.py --ratings data/ratings.csv --movies data/movies.csv --outdir outputs --k 10 --alpha 0.6 --knn_weight 0.3 --knn_neighbors 20 --seed 42
+```
+
+## Streamlit Web App
+```bash
+python app.py
+```
+
+**Outputs**
+- `outputs/metrics.json` – Precision@K, Recall@K, NDCG@K (content, collab, hybrid, knn_hybrid)
+=======
 python src/build_recommender.py --ratings data/ratings.csv --movies data/movies.csv --outdir outputs --k 10 --alpha 0.6 --seed 42
 ```
 
 **Outputs**
 - `outputs/metrics.json` – Precision@K, Recall@K, NDCG@K (content, collab, hybrid)
+>>>>>>> 81fb6d98d82d9e37ed32e8b71c93cb78a568f321
 - `outputs/recs_user_*.txt` – sample recommendations for a few users
 - `outputs/ratings_hist.png`
 - `outputs/top_movies.png`
