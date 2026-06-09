@@ -49,6 +49,7 @@ jobs:
       - name: Verify expected outputs
         run: |
           test -f outputs/metrics.json
+          test -f outputs/baseline_comparison.csv
           test -f outputs/ratings_hist.png
           test -f outputs/top_movies.png
           test -f outputs/recs_user_1.txt
@@ -72,7 +73,24 @@ jobs:
                   if not 0 <= value <= 1:
                       raise AssertionError(f"{key}.{metric} must be between 0 and 1, got {value}")
 
-          print("metrics.json OK")
+          baselines = data.get("baselines")
+          if not isinstance(baselines, dict) or len(baselines) < 5:
+              raise AssertionError("metrics.json must include at least five baseline models")
+          for key, values in baselines.items():
+              for metric in ["precision", "recall", "ndcg"]:
+                  value = values[metric]
+                  if not 0 <= value <= 1:
+                      raise AssertionError(f"{key}.{metric} must be between 0 and 1, got {value}")
+
+          import csv
+          rows = list(csv.DictReader(Path("outputs/baseline_comparison.csv").open()))
+          if len(rows) < 8:
+              raise AssertionError("baseline_comparison.csv should compare main models and baselines")
+          for column in ["model", "precision", "recall", "ndcg"]:
+              if column not in rows[0]:
+                  raise AssertionError(f"Missing comparison column: {column}")
+
+          print("metrics.json and baseline_comparison.csv OK")
           PY
 
       - name: Upload generated outputs
