@@ -57,6 +57,9 @@ jobs:
           test -f outputs/recs_user_1.txt
           test -f outputs/recs_user_2.txt
           test -f outputs/recs_user_3.txt
+          test -f outputs/recs_user_1.csv
+          test -f outputs/recs_user_2.csv
+          test -f outputs/recs_user_3.csv
 
       - name: Validate metrics JSON
         run: |
@@ -114,7 +117,25 @@ jobs:
                   if not 0 <= value <= 1:
                       raise AssertionError(f"alpha_sweep.{column} must be between 0 and 1, got {value}")
 
-          print("metrics, baseline comparison, and alpha sweep outputs OK")
+          for user_id in [1, 2, 3]:
+              rec_path = Path(f"outputs/recs_user_{user_id}.csv")
+              recs = list(csv.DictReader(rec_path.open()))
+              if len(recs) != 10:
+                  raise AssertionError(f"{rec_path} should contain 10 recommendations")
+              expected_columns = ["rank", "user_id", "movie_id", "title", "genres", "score", "reason"]
+              for column in expected_columns:
+                  if column not in recs[0]:
+                      raise AssertionError(f"Missing recommendation column: {column}")
+              ranks = [int(row["rank"]) for row in recs]
+              if ranks != list(range(1, 11)):
+                  raise AssertionError(f"Unexpected recommendation ranks in {rec_path}: {ranks}")
+              scores = [float(row["score"]) for row in recs]
+              if scores != sorted(scores, reverse=True):
+                  raise AssertionError(f"Scores should be sorted descending in {rec_path}")
+              if any(not row["reason"].strip() for row in recs):
+                  raise AssertionError(f"Recommendation reasons must be populated in {rec_path}")
+
+          print("metrics, baseline comparison, alpha sweep, and recommendation outputs OK")
           PY
 
       - name: Upload generated outputs
