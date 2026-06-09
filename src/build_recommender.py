@@ -109,6 +109,86 @@ def recommend_for_user(uid, seen_items, collab_row, content_row, alpha=0.6, topk
     top_idx = top_idx[np.argsort(scores[top_idx])[::-1]]
     return top_idx, scores[top_idx]
 
+def split_genres(value):
+    """Split a comma-separated genre string into clean labels."""
+    if pd.isna(value):
+        return []
+    return [genre.strip() for genre in str(value).split(",") if genre.strip()]
+
+def liked_genre_profile(user_liked_movie_ids, movies):
+    """Return liked genres ordered by frequency, then alphabetically."""
+    if not user_liked_movie_ids:
+        return []
+
+    liked_movie_ids = {int(movie_id) for movie_id in user_liked_movie_ids}
+    genre_counts = {}
+    for genres in movies.loc[movies["movie_id"].isin(liked_movie_ids), "genres"]:
+        for genre in split_genres(genres):
+            genre_counts[genre] = genre_counts.get(genre, 0) + 1
+
+    return [
+        genre
+        for genre, _ in sorted(
+            genre_counts.items(),
+            key=lambda item: (-item[1], item[0]),
+        )
+    ]
+
+def recommendation_reason(movie_genres, liked_genres):
+    """Create a short explanation for a recommended movie."""
+    movie_genres = split_genres(movie_genres)
+    liked = set(liked_genres)
+    overlap = [genre for genre in movie_genres if genre in liked]
+
+    if overlap:
+        shown = ", ".join(overlap[:3])
+        return f"Shares liked genre signals: {shown}."
+    if movie_genres:
+        shown = ", ".join(movie_genres[:3])
+        return f"High hybrid score among unseen movies; genres: {shown}."
+    return "High hybrid score among movies the user has not rated."
+
+def build_recommendation_table(uid, top_idx, scores, movies, liked_movie_ids=None):
+    """Build a structured recommendation table for one user.
+
+    ``top_idx`` uses zero-based matrix indices; ``movie_id`` is one-based in the
+    synthetic dataset. The returned table is easier to inspect than raw title +
+    score lines because it includes rank, movie IDs, genres, and a short reason.
+    """
+    liked_movie_ids = liked_movie_ids or set()
+    liked_genres = liked_genre_profile(liked_movie_ids, movies)
+    movie_lookup = movies.set_index("movie_id")
+
+    rows = []
+    for rank, (item_idx, score) in enumerate(zip(top_idx, scores), start=1):
+        movie_id = int(item_idx) + 1
+        movie = movie_lookup.loc[movie_id]
+        rows.append({
+            "rank": rank,
+            "user_id": int(uid),
+            "movie_id": movie_id,
+            "title": str(movie["title"]),
+            "genres": str(movie["genres"]),
+            "score": round(float(score), 6),
+            "reason": recommendation_reason(movie["genres"], liked_genres),
+        })
+    return pd.DataFrame(rows)
+
+def write_recommendation_outputs(recs, outdir, uid):
+    """Write both structured CSV and readable text recommendation outputs."""
+    csv_path = os.path.join(outdir, f"recs_user_{uid}.csv")
+    txt_path = os.path.join(outdir, f"recs_user_{uid}.txt")
+
+    recs.to_csv(csv_path, index=False)
+    with open(txt_path, "w", encoding="utf-8") as f:
+        f.write("rank	movie_id	title	genres	score	reason\n")
+        for row in recs.itertuples(index=False):
+            f.write(
+                f"{row.rank}	{row.movie_id}	{row.title}	{row.genres}	"
+                f"{float(row.score):.4f}	{row.reason}\n"
+            )
+    return {"csv": csv_path, "txt": txt_path}
+
 def ndcg_at_k(recommended, relevant, k):
     dcg = 0.0
     for i, item in enumerate(recommended[:k], start=1):
@@ -243,12 +323,14 @@ def main():
         content_row = item_sims[list(liked)].mean(axis=0) if len(liked) > 0 else None
         seen = seen_by_user.get(u, set())
         top_idx, scores = recommend_for_user(u, seen, collab_row, content_row, alpha=args.alpha, topk=args.k)
-        titles = movies.set_index("movie_id").loc[top_idx + 1, "title"].tolist()
-        with open(os.path.join(args.outdir, f"recs_user_{uid}.txt"), "w", encoding="utf-8") as f:
-            for t, s in zip(titles, scores):
-                f.write(f"{t}\t{float(s):.4f}\n")
-
-
+        recs = build_recommendation_table(
+            uid=uid,
+            top_idx=top_idx,
+            scores=scores,
+            movies=movies,
+            liked_movie_ids={movie_id + 1 for movie_id in liked},
+        )
+        write_recommendation_outputs(recs, args.outdir, uid)
 
     print(f"[OK] Finished. Metrics saved to {os.path.join(args.outdir, 'metrics.json')}")
 
