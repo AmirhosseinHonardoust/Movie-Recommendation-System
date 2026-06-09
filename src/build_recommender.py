@@ -5,6 +5,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import TruncatedSVD
 from scipy.sparse import csr_matrix
 from utils import train_test_split_by_user, build_ui_matrix
+from baselines import build_baseline_scores
 
 def ensure_outdir(p): os.makedirs(p, exist_ok=True)
 
@@ -100,33 +101,72 @@ def main():
         if len(rel) > 0:
             truth[uid-1] = rel
 
-    def eval_model(alpha_use):
+    def aggregate_ranking_metrics(recommendations_by_user):
         precs, recs, ndcgs = [], [], []
-        for u in range(n_users):
-            collab_row = collab[u] if u < collab.shape[0] else np.zeros(n_items)
-            liked = liked_by_user.get(u, set())
-            content_row = item_sims[list(liked)].mean(axis=0) if len(liked) > 0 else None
-            seen = seen_by_user.get(u, set())
-            top_idx, _ = recommend_for_user(u, seen, collab_row, content_row, alpha=alpha_use, topk=args.k)
+        for u, top_idx in recommendations_by_user():
             relevant = truth.get(u, set())
-            if len(relevant) == 0: 
+            if len(relevant) == 0:
                 continue
             hits = sum(1 for it in top_idx if it in relevant)
             precs.append(hits / args.k)
             recs.append(hits / len(relevant))
             ndcgs.append(ndcg_at_k(top_idx, relevant, args.k))
-        return float(np.mean(precs)) if precs else 0.0, float(np.mean(recs)) if recs else 0.0, float(np.mean(ndcgs)) if ndcgs else 0.0
+        return {
+            "precision": float(np.mean(precs)) if precs else 0.0,
+            "recall": float(np.mean(recs)) if recs else 0.0,
+            "ndcg": float(np.mean(ndcgs)) if ndcgs else 0.0,
+        }
 
-    p_c, r_c, n_c = eval_model(alpha_use=1.0)
-    p_t, r_t, n_t = eval_model(alpha_use=0.0)
-    p_h, r_h, n_h = eval_model(alpha_use=args.alpha)
+    def eval_model(alpha_use):
+        def recommendations_by_user():
+            for u in range(n_users):
+                collab_row = collab[u] if u < collab.shape[0] else np.zeros(n_items)
+                liked = liked_by_user.get(u, set())
+                content_row = item_sims[list(liked)].mean(axis=0) if len(liked) > 0 else None
+                seen = seen_by_user.get(u, set())
+                top_idx, _ = recommend_for_user(u, seen, collab_row, content_row, alpha=alpha_use, topk=args.k)
+                yield u, top_idx
+        return aggregate_ranking_metrics(recommendations_by_user)
+
+    def eval_static_scores(score_vector):
+        def recommendations_by_user():
+            for u in range(n_users):
+                seen = seen_by_user.get(u, set())
+                top_idx, _ = recommend_for_user(
+                    uid=u,
+                    seen_items=seen,
+                    collab_row=score_vector,
+                    content_row=None,
+                    alpha=1.0,
+                    topk=args.k,
+                )
+                yield u, top_idx
+        return aggregate_ranking_metrics(recommendations_by_user)
+
+    model_metrics = {
+        "collaborative": eval_model(alpha_use=1.0),
+        "content": eval_model(alpha_use=0.0),
+        "hybrid": eval_model(alpha_use=args.alpha),
+    }
+    baseline_scores = build_baseline_scores(train, n_items=n_items, seed=args.seed)
+    baseline_metrics = {
+        name: eval_static_scores(scores) for name, scores in baseline_scores.items()
+    }
+
+    comparison_rows = []
+    for model_name, values in {**model_metrics, **baseline_metrics}.items():
+        comparison_rows.append({"model": model_name, **values})
+    comparison = pd.DataFrame(comparison_rows).sort_values(
+        ["ndcg", "precision", "recall"], ascending=False
+    )
+    comparison.to_csv(os.path.join(args.outdir, "baseline_comparison.csv"), index=False)
 
     metrics = {
         "k": args.k,
         "alpha": args.alpha,
-        "collaborative": {"precision": p_c, "recall": r_c, "ndcg": n_c},
-        "content": {"precision": p_t, "recall": r_t, "ndcg": n_t},
-        "hybrid": {"precision": p_h, "recall": r_h, "ndcg": n_h},
+        **model_metrics,
+        "baselines": baseline_metrics,
+        "best_model_by_ndcg": str(comparison.iloc[0]["model"]) if not comparison.empty else None,
     }
     with open(os.path.join(args.outdir, "metrics.json"), "w") as f:
         json.dump(metrics, f, indent=2)
