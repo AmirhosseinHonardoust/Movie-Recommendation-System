@@ -7,6 +7,58 @@ from scipy.sparse import csr_matrix
 from utils import train_test_split_by_user, build_ui_matrix
 from baselines import build_baseline_scores
 
+ALPHA_SWEEP_VALUES = tuple(round(i / 10, 1) for i in range(11))
+
+def build_alpha_sweep(eval_model, alpha_values=ALPHA_SWEEP_VALUES):
+    """Evaluate hybrid blend weights and return a tidy metrics table.
+
+    ``alpha=0`` is content-only and ``alpha=1`` is collaborative-only. Values
+    between them blend collaborative and content scores.
+    """
+    rows = []
+    for alpha in alpha_values:
+        alpha = float(alpha)
+        metrics = eval_model(alpha)
+        rows.append({
+            "alpha": alpha,
+            "precision": float(metrics.get("precision", 0.0)),
+            "recall": float(metrics.get("recall", 0.0)),
+            "ndcg": float(metrics.get("ndcg", 0.0)),
+        })
+    return pd.DataFrame(rows)
+
+def best_alpha_by_metric(alpha_sweep, metric="ndcg"):
+    """Return the best alpha row as a plain dictionary."""
+    if alpha_sweep.empty:
+        return {"alpha": None, "metric": metric, "value": None}
+    if metric not in alpha_sweep.columns:
+        raise ValueError(f"metric must be one of {list(alpha_sweep.columns)}, got {metric!r}")
+    ordered = alpha_sweep.sort_values([metric, "precision", "recall"], ascending=False)
+    best = ordered.iloc[0]
+    return {
+        "alpha": float(best["alpha"]),
+        "metric": metric,
+        "value": float(best[metric]),
+        "precision": float(best["precision"]),
+        "recall": float(best["recall"]),
+        "ndcg": float(best["ndcg"]),
+    }
+
+def plot_alpha_sweep(alpha_sweep, outpath):
+    """Plot ranking metrics across hybrid alpha values."""
+    fig, ax = plt.subplots(figsize=(7, 4))
+    for metric in ["precision", "recall", "ndcg"]:
+        if metric in alpha_sweep.columns:
+            ax.plot(alpha_sweep["alpha"], alpha_sweep[metric], marker="o", label=metric)
+    ax.set_xlabel("Hybrid alpha: 0 = content, 1 = collaborative")
+    ax.set_ylabel("Metric value")
+    ax.set_title("Hybrid alpha sweep")
+    ax.set_ylim(bottom=0)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(outpath, dpi=160)
+    plt.close(fig)
+
 def ensure_outdir(p): os.makedirs(p, exist_ok=True)
 
 def plot_hist(ratings, outpath):
@@ -72,6 +124,7 @@ def main():
     ap.add_argument("--outdir", default="outputs")
     ap.add_argument("--k", type=int, default=10)
     ap.add_argument("--alpha", type=float, default=0.6)
+    ap.add_argument("--skip-alpha-sweep", action="store_true", help="Skip alpha-sweep CSV/plot generation.")
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
 
@@ -153,6 +206,14 @@ def main():
         name: eval_static_scores(scores) for name, scores in baseline_scores.items()
     }
 
+    alpha_sweep = pd.DataFrame()
+    best_alpha = {"alpha": args.alpha, "metric": "ndcg", "value": model_metrics["hybrid"]["ndcg"], **model_metrics["hybrid"]}
+    if not args.skip_alpha_sweep:
+        alpha_sweep = build_alpha_sweep(eval_model, ALPHA_SWEEP_VALUES)
+        alpha_sweep.to_csv(os.path.join(args.outdir, "alpha_sweep.csv"), index=False)
+        plot_alpha_sweep(alpha_sweep, os.path.join(args.outdir, "alpha_sweep.png"))
+        best_alpha = best_alpha_by_metric(alpha_sweep, metric="ndcg")
+
     comparison_rows = []
     for model_name, values in {**model_metrics, **baseline_metrics}.items():
         comparison_rows.append({"model": model_name, **values})
@@ -167,6 +228,10 @@ def main():
         **model_metrics,
         "baselines": baseline_metrics,
         "best_model_by_ndcg": str(comparison.iloc[0]["model"]) if not comparison.empty else None,
+        "alpha_sweep": {
+            "values": list(ALPHA_SWEEP_VALUES),
+            "best_by_ndcg": best_alpha,
+        },
     }
     with open(os.path.join(args.outdir, "metrics.json"), "w") as f:
         json.dump(metrics, f, indent=2)
