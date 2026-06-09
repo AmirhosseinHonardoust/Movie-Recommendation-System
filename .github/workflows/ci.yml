@@ -50,6 +50,8 @@ jobs:
         run: |
           test -f outputs/metrics.json
           test -f outputs/baseline_comparison.csv
+          test -f outputs/alpha_sweep.csv
+          test -f outputs/alpha_sweep.png
           test -f outputs/ratings_hist.png
           test -f outputs/top_movies.png
           test -f outputs/recs_user_1.txt
@@ -90,7 +92,29 @@ jobs:
               if column not in rows[0]:
                   raise AssertionError(f"Missing comparison column: {column}")
 
-          print("metrics.json and baseline_comparison.csv OK")
+          alpha_sweep = data.get("alpha_sweep")
+          if not isinstance(alpha_sweep, dict):
+              raise AssertionError("metrics.json must include alpha_sweep metadata")
+          values = alpha_sweep.get("values")
+          if values != [round(i / 10, 1) for i in range(11)]:
+              raise AssertionError(f"Unexpected alpha sweep values: {values}")
+          best = alpha_sweep.get("best_by_ndcg", {})
+          if best.get("alpha") not in values:
+              raise AssertionError("best alpha must be one of the sweep values")
+
+          sweep_rows = list(csv.DictReader(Path("outputs/alpha_sweep.csv").open()))
+          if len(sweep_rows) != 11:
+              raise AssertionError("alpha_sweep.csv should contain 11 rows")
+          for column in ["alpha", "precision", "recall", "ndcg"]:
+              if column not in sweep_rows[0]:
+                  raise AssertionError(f"Missing alpha sweep column: {column}")
+          for row in sweep_rows:
+              for column in ["precision", "recall", "ndcg"]:
+                  value = float(row[column])
+                  if not 0 <= value <= 1:
+                      raise AssertionError(f"alpha_sweep.{column} must be between 0 and 1, got {value}")
+
+          print("metrics, baseline comparison, and alpha sweep outputs OK")
           PY
 
       - name: Upload generated outputs
