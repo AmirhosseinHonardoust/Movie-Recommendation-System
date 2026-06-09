@@ -33,12 +33,17 @@ def build_content_item_sims(movies):
     return sims, tfidf
 
 def collaborative_scores(train_ui, n_components=50, seed=42):
+    """Return reconstructed user-item scores from a truncated SVD model.
+
+    ``TruncatedSVD.fit_transform`` already returns the user embeddings in the
+    reduced latent space. Multiplying those embeddings by ``singular_values_``
+    again double-counts the singular values and inflates recommendation scores.
+    ``inverse_transform`` is the scikit-learn-supported reconstruction path.
+    """
     svd = TruncatedSVD(n_components=n_components, random_state=seed)
-    U = svd.fit_transform(train_ui)
-    S = svd.singular_values_
-    Vt = svd.components_
-    scores = (U * S) @ Vt
-    return scores
+    user_factors = svd.fit_transform(train_ui)
+    scores = svd.inverse_transform(user_factors)
+    return np.asarray(scores, dtype=float)
 
 def recommend_for_user(uid, seen_items, collab_row, content_row, alpha=0.6, topk=10):
     n_items = collab_row.shape[0]
@@ -140,7 +145,7 @@ def main():
 
 
 
-    print("[OK] Finished. Metrics saved to outputs/metrics.json")
+    print(f"[OK] Finished. Metrics saved to {os.path.join(args.outdir, 'metrics.json')}")
 
 if __name__ == "__main__":
     main()
