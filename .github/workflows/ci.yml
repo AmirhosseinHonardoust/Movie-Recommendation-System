@@ -7,7 +7,7 @@ on:
 
 jobs:
   smoke-test:
-    name: Smoke test on Python ${{ matrix.python-version }}
+    name: Test and smoke workflow on Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -32,7 +32,11 @@ jobs:
 
       - name: Check source files compile
         run: |
-          python -m compileall data src
+          python -m compileall data src tests
+
+      - name: Run unit tests
+        run: |
+          python -m unittest discover -s tests -v
 
       - name: Generate synthetic dataset
         run: |
@@ -50,6 +54,26 @@ jobs:
           test -f outputs/recs_user_1.txt
           test -f outputs/recs_user_2.txt
           test -f outputs/recs_user_3.txt
+
+      - name: Validate metrics JSON
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("outputs/metrics.json")
+          data = json.loads(path.read_text())
+
+          for key in ["collaborative", "content", "hybrid"]:
+              if key not in data:
+                  raise AssertionError(f"Missing model metrics: {key}")
+              for metric in ["precision", "recall", "ndcg"]:
+                  value = data[key][metric]
+                  if not 0 <= value <= 1:
+                      raise AssertionError(f"{key}.{metric} must be between 0 and 1, got {value}")
+
+          print("metrics.json OK")
+          PY
 
       - name: Upload generated outputs
         uses: actions/upload-artifact@v4
