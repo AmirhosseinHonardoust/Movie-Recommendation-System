@@ -1,0 +1,11 @@
+rank	movie_id	title	genres	score	reason
+1	45	Movie 0045	Crime	0.6320	Shares liked genre signals: Crime.
+2	49	Movie 0049	Comedy,Sci-Fi	0.5911	Shares liked genre signals: Comedy.
+3	300	Movie 0300	Romance	0.5345	Shares liked genre signals: Romance.
+4	70	Movie 0070	Adventure	0.5132	High hybrid score among unseen movies; genres: Adventure.
+5	297	Movie 0297	Romance,Thriller	0.5065	Shares liked genre signals: Romance, Thriller.
+6	26	Movie 0026	Drama,Horror,Romance	0.4989	Shares liked genre signals: Drama, Romance.
+7	232	Movie 0232	Comedy,Romance	0.4742	Shares liked genre signals: Comedy, Romance.
+8	89	Movie 0089	Comedy,War,Western	0.4521	Shares liked genre signals: Comedy, War.
+9	228	Movie 0228	War	0.4463	Shares liked genre signals: War.
+10	16	Movie 0016	Crime,War	0.4238	Shares liked genre signals: Crime, War.
