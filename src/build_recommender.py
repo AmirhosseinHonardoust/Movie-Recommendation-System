@@ -1,6 +1,11 @@
+from __future__ import annotations
+
 import argparse
 import json
 import os
+from collections.abc import Callable, Collection, Iterable, Sequence
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,10 +17,16 @@ from sklearn.metrics.pairwise import cosine_similarity
 from baselines import build_baseline_scores
 from utils import build_ui_matrix, train_test_split_by_user
 
+if TYPE_CHECKING:
+    from scipy.sparse import csr_matrix
+
 ALPHA_SWEEP_VALUES = tuple(round(i / 10, 1) for i in range(11))
 
 
-def build_alpha_sweep(eval_model, alpha_values=ALPHA_SWEEP_VALUES):
+def build_alpha_sweep(
+    eval_model: Callable[[float], dict[str, float]],
+    alpha_values: Sequence[float] = ALPHA_SWEEP_VALUES,
+) -> pd.DataFrame:
     """Evaluate hybrid blend weights and return a tidy metrics table.
 
     ``alpha=0`` is content-only and ``alpha=1`` is collaborative-only. Values
@@ -36,7 +47,9 @@ def build_alpha_sweep(eval_model, alpha_values=ALPHA_SWEEP_VALUES):
     return pd.DataFrame(rows)
 
 
-def best_alpha_by_metric(alpha_sweep, metric="ndcg"):
+def best_alpha_by_metric(
+    alpha_sweep: pd.DataFrame, metric: str = "ndcg"
+) -> dict[str, float | str | None]:
     """Return the best alpha row as a plain dictionary."""
     if alpha_sweep.empty:
         return {"alpha": None, "metric": metric, "value": None}
@@ -54,7 +67,7 @@ def best_alpha_by_metric(alpha_sweep, metric="ndcg"):
     }
 
 
-def plot_alpha_sweep(alpha_sweep, outpath):
+def plot_alpha_sweep(alpha_sweep: pd.DataFrame, outpath: str | Path) -> None:
     """Plot ranking metrics across hybrid alpha values."""
     fig, ax = plt.subplots(figsize=(7, 4))
     for metric in ["precision", "recall", "ndcg"]:
@@ -70,11 +83,11 @@ def plot_alpha_sweep(alpha_sweep, outpath):
     plt.close(fig)
 
 
-def ensure_outdir(p):
+def ensure_outdir(p: str | Path) -> None:
     os.makedirs(p, exist_ok=True)
 
 
-def plot_hist(ratings, outpath):
+def plot_hist(ratings: pd.DataFrame, outpath: str | Path) -> None:
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.hist(ratings["rating"], bins=[0.5, 1.5, 2.5, 3.5, 4.5, 5.5])
     ax.set_xticks([1, 2, 3, 4, 5])
@@ -86,7 +99,12 @@ def plot_hist(ratings, outpath):
     plt.close(fig)
 
 
-def top_popular(train, movies, topn=20, outpath=None):
+def top_popular(
+    train: pd.DataFrame,
+    movies: pd.DataFrame,
+    topn: int = 20,
+    outpath: str | Path | None = None,
+) -> pd.DataFrame:
     pop = train.groupby("movie_id")["rating"].mean().reset_index(name="avg_rating")
     pop["count"] = train.groupby("movie_id")["rating"].count().values
     pop = (
@@ -105,14 +123,16 @@ def top_popular(train, movies, topn=20, outpath=None):
     return pop
 
 
-def build_content_item_sims(movies):
+def build_content_item_sims(movies: pd.DataFrame) -> tuple[np.ndarray, TfidfVectorizer]:
     tfidf = TfidfVectorizer(token_pattern=r"[^,]+")
     X = tfidf.fit_transform(movies["genres"])
     sims = cosine_similarity(X)
     return sims, tfidf
 
 
-def collaborative_scores(train_ui, n_components=50, seed=42):
+def collaborative_scores(
+    train_ui: csr_matrix, n_components: int = 50, seed: int = 42
+) -> np.ndarray:
     """Return reconstructed user-item scores from a truncated SVD model.
 
     ``TruncatedSVD.fit_transform`` already returns the user embeddings in the
@@ -126,7 +146,14 @@ def collaborative_scores(train_ui, n_components=50, seed=42):
     return np.asarray(scores, dtype=float)
 
 
-def recommend_for_user(uid, seen_items, collab_row, content_row, alpha=0.6, topk=10):
+def recommend_for_user(
+    uid: int,
+    seen_items: Iterable[int],
+    collab_row: np.ndarray,
+    content_row: np.ndarray | None,
+    alpha: float = 0.6,
+    topk: int = 10,
+) -> tuple[np.ndarray, np.ndarray]:
     scores = alpha * collab_row
     if content_row is not None:
         scores = scores + (1 - alpha) * content_row
@@ -137,20 +164,20 @@ def recommend_for_user(uid, seen_items, collab_row, content_row, alpha=0.6, topk
     return top_idx, scores[top_idx]
 
 
-def split_genres(value):
+def split_genres(value: object) -> list[str]:
     """Split a comma-separated genre string into clean labels."""
     if pd.isna(value):
         return []
     return [genre.strip() for genre in str(value).split(",") if genre.strip()]
 
 
-def liked_genre_profile(user_liked_movie_ids, movies):
+def liked_genre_profile(user_liked_movie_ids: Collection[int], movies: pd.DataFrame) -> list[str]:
     """Return liked genres ordered by frequency, then alphabetically."""
     if not user_liked_movie_ids:
         return []
 
     liked_movie_ids = {int(movie_id) for movie_id in user_liked_movie_ids}
-    genre_counts = {}
+    genre_counts: dict[str, int] = {}
     for genres in movies.loc[movies["movie_id"].isin(liked_movie_ids), "genres"]:
         for genre in split_genres(genres):
             genre_counts[genre] = genre_counts.get(genre, 0) + 1
@@ -164,7 +191,7 @@ def liked_genre_profile(user_liked_movie_ids, movies):
     ]
 
 
-def recommendation_reason(movie_genres, liked_genres):
+def recommendation_reason(movie_genres: object, liked_genres: Sequence[str]) -> str:
     """Create a short explanation for a recommended movie."""
     movie_genres = split_genres(movie_genres)
     liked = set(liked_genres)
@@ -179,7 +206,13 @@ def recommendation_reason(movie_genres, liked_genres):
     return "High hybrid score among movies the user has not rated."
 
 
-def build_recommendation_table(uid, top_idx, scores, movies, liked_movie_ids=None):
+def build_recommendation_table(
+    uid: int,
+    top_idx: np.ndarray,
+    scores: np.ndarray,
+    movies: pd.DataFrame,
+    liked_movie_ids: set[int] | None = None,
+) -> pd.DataFrame:
     """Build a structured recommendation table for one user.
 
     ``top_idx`` uses zero-based matrix indices; ``movie_id`` is one-based in the
@@ -208,7 +241,9 @@ def build_recommendation_table(uid, top_idx, scores, movies, liked_movie_ids=Non
     return pd.DataFrame(rows)
 
 
-def write_recommendation_outputs(recs, outdir, uid):
+def write_recommendation_outputs(
+    recs: pd.DataFrame, outdir: str | Path, uid: int
+) -> dict[str, str]:
     """Write both structured CSV and readable text recommendation outputs."""
     csv_path = os.path.join(outdir, f"recs_user_{uid}.csv")
     txt_path = os.path.join(outdir, f"recs_user_{uid}.txt")
@@ -224,7 +259,7 @@ def write_recommendation_outputs(recs, outdir, uid):
     return {"csv": csv_path, "txt": txt_path}
 
 
-def ndcg_at_k(recommended, relevant, k):
+def ndcg_at_k(recommended: Sequence[int], relevant: Collection[int], k: int) -> float:
     dcg = 0.0
     for i, item in enumerate(recommended[:k], start=1):
         if item in relevant:
@@ -233,7 +268,7 @@ def ndcg_at_k(recommended, relevant, k):
     return dcg / idcg if idcg > 0 else 0.0
 
 
-def main():
+def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--ratings", required=True)
     ap.add_argument("--movies", required=True)
