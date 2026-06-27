@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = ROOT / "src"
 sys.path.insert(0, str(SRC_DIR))
 
-from build_recommender import (  # noqa: E402
+from build_recommender import (
     ALPHA_SWEEP_VALUES,
     best_alpha_by_metric,
     build_alpha_sweep,
