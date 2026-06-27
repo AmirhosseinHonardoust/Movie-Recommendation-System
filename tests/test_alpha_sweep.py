@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -7,13 +8,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-import sys
-
 ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = ROOT / "src"
 sys.path.insert(0, str(SRC_DIR))
 
-from build_recommender import (
+from build_recommender import (  # noqa: E402
     ALPHA_SWEEP_VALUES,
     best_alpha_by_metric,
     build_alpha_sweep,
