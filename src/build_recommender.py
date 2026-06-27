@@ -5,7 +5,6 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.sparse import csr_matrix
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -128,7 +127,6 @@ def collaborative_scores(train_ui, n_components=50, seed=42):
 
 
 def recommend_for_user(uid, seen_items, collab_row, content_row, alpha=0.6, topk=10):
-    n_items = collab_row.shape[0]
     scores = alpha * collab_row
     if content_row is not None:
         scores = scores + (1 - alpha) * content_row
@@ -193,7 +191,7 @@ def build_recommendation_table(uid, top_idx, scores, movies, liked_movie_ids=Non
     movie_lookup = movies.set_index("movie_id")
 
     rows = []
-    for rank, (item_idx, score) in enumerate(zip(top_idx, scores), start=1):
+    for rank, (item_idx, score) in enumerate(zip(top_idx, scores, strict=False), start=1):
         movie_id = int(item_idx) + 1
         movie = movie_lookup.loc[movie_id]
         rows.append(
@@ -266,16 +264,16 @@ def main():
     collab = collaborative_scores(train_ui, n_components=n_comp, seed=args.seed)
 
     seen_by_user = {
-        uid - 1: set((grp["movie_id"].values - 1)) for uid, grp in train.groupby("user_id")
+        uid - 1: set(grp["movie_id"].values - 1) for uid, grp in train.groupby("user_id")
     }
     liked_by_user = {
-        uid - 1: set((grp.loc[grp["rating"] >= 4, "movie_id"].values - 1))
+        uid - 1: set(grp.loc[grp["rating"] >= 4, "movie_id"].values - 1)
         for uid, grp in train.groupby("user_id")
     }
 
     truth = {}
     for uid, grp in test.groupby("user_id"):
-        rel = set((grp.loc[grp["rating"] >= 4, "movie_id"].values - 1))
+        rel = set(grp.loc[grp["rating"] >= 4, "movie_id"].values - 1)
         if len(rel) > 0:
             truth[uid - 1] = rel
 
