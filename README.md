@@ -30,6 +30,7 @@ A production-minded movie recommendation workflow for comparing **content-based 
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Synthetic Data Generator](#synthetic-data-generator)
+- [Real Data (MovieLens)](#real-data-movielens)
 - [Recommendation Methods](#recommendation-methods)
 - [Training and Evaluation](#training-and-evaluation)
 - [Baselines](#baselines)
@@ -163,6 +164,7 @@ Movie-Recommendation-System/
 │
 ├── data/
 │   ├── generate_ratings.py
+│   ├── load_movielens.py
 │   ├── movies.csv
 │   └── ratings.csv
 │
@@ -183,6 +185,12 @@ Movie-Recommendation-System/
 ├── src/
 │   ├── baselines.py
 │   ├── build_recommender.py
+│   ├── io_utils.py
+│   ├── metrics.py
+│   ├── models.py
+│   ├── plots.py
+│   ├── recommend.py
+│   ├── reporting.py
 │   └── utils.py
 │
 ├── tests/
@@ -191,11 +199,17 @@ Movie-Recommendation-System/
 │   ├── test_collaborative_scoring.py
 │   ├── test_data_generation.py
 │   ├── test_metrics_and_recommendations.py
+│   ├── test_movielens_loader.py
+│   ├── test_pipeline_e2e.py
+│   ├── test_recommend.py
 │   ├── test_recommendation_outputs.py
 │   └── test_split_and_matrix.py
 │
+├── MODEL_CARD.md
 ├── README.md
+├── pyproject.toml
 ├── requirements.txt
+├── requirements-dev.txt
 └── LICENSE
 ```
 
@@ -288,6 +302,24 @@ The generator creates:
 - deterministic output for the same seed
 
 The data is synthetic and intended for recommender-system workflow demonstration, not for real movie-preference benchmarking.
+
+---
+
+## Real Data (MovieLens)
+
+The default dataset is synthetic, but the project can also run on real
+[MovieLens](https://grouplens.org/datasets/movielens/) interaction data. Download a
+MovieLens release (for example `ml-latest-small`) so that `movies.csv` and
+`ratings.csv` are available locally, then convert them to this project's schema:
+
+```bash
+python data/load_movielens.py --indir path/to/ml-latest-small --outdir data
+```
+
+The converter remaps IDs to contiguous one-based values, rewrites pipe-separated
+genres as comma-separated strings, and rounds ratings to the 1-5 range. After
+conversion, run the workflow exactly as with synthetic data. The download itself
+is a manual step; only local conversion is automated.
 
 ---
 
@@ -396,20 +428,22 @@ Example ranking results from the included synthetic run:
 
 | Model | Precision@10 | Recall@10 | NDCG@10 |
 |---|---|---|---|
-| `bayesian_average` | 0.0086 | 0.0546 | 0.0283 |
-| `content` | 0.0092 | 0.0471 | 0.0272 |
-| `hybrid` | 0.0092 | 0.0455 | 0.0227 |
-| `average_rating` | 0.0075 | 0.0441 | 0.0221 |
-| `collaborative` | 0.0069 | 0.0383 | 0.0196 |
-| `most_popular` | 0.0052 | 0.0287 | 0.0186 |
-| `positive_count` | 0.0063 | 0.0307 | 0.0146 |
-| `random` | 0.0057 | 0.0230 | 0.0137 |
+| `positive_count` | 0.0028 | 0.0168 | 0.0097 |
+| `average_rating` | 0.0029 | 0.0180 | 0.0086 |
+| `bayesian_average` | 0.0028 | 0.0175 | 0.0085 |
+| `content` | 0.0026 | 0.0129 | 0.0072 |
+| `collaborative` | 0.0021 | 0.0089 | 0.0053 |
+| `hybrid` | 0.0021 | 0.0091 | 0.0052 |
+| `most_popular` | 0.0021 | 0.0086 | 0.0049 |
+| `random` | 0.0014 | 0.0079 | 0.0038 |
 
 </div>
 
-On the current synthetic dataset, the **Bayesian-average baseline has the strongest NDCG@10**. That is useful information: it shows the synthetic dataset currently rewards simple item-level popularity and rating priors more than the learned collaborative model.
+MAP@10 and MRR@10 are also recorded for every model in `outputs/metrics.json` and `outputs/baseline_comparison.csv`.
 
-> These values are from a synthetic demo dataset and should not be interpreted as real-world recommendation performance.
+On the current synthetic dataset, the **positive-count baseline has the strongest NDCG@10**. That is useful information: it shows the synthetic dataset currently rewards simple item-level popularity and rating priors more than the learned collaborative model.
+
+> These values are from a synthetic demo dataset and should not be interpreted as real-world recommendation performance. They are reproducible from the committed `data/` with the dependency versions pinned in `requirements.txt`.
 
 ---
 
@@ -434,17 +468,17 @@ Example alpha-sweep results from the included run:
 
 | Alpha | Precision@10 | Recall@10 | NDCG@10 |
 |---|---|---|---|
-| 0.0 | 0.0092 | 0.0471 | 0.0272 |
-| 0.1 | 0.0063 | 0.0302 | 0.0236 |
-| 0.2 | 0.0057 | 0.0292 | 0.0211 |
-| 0.3 | 0.0080 | 0.0412 | 0.0230 |
-| 0.4 | 0.0086 | 0.0412 | 0.0232 |
-| 0.5 | 0.0086 | 0.0383 | 0.0225 |
-| 0.6 | 0.0092 | 0.0455 | 0.0227 |
-| 0.7 | 0.0086 | 0.0436 | 0.0219 |
-| 0.8 | 0.0080 | 0.0388 | 0.0208 |
-| 0.9 | 0.0080 | 0.0431 | 0.0216 |
-| 1.0 | 0.0069 | 0.0383 | 0.0196 |
+| 0.0 | 0.0026 | 0.0129 | 0.0072 |
+| 0.1 | 0.0024 | 0.0132 | 0.0073 |
+| 0.2 | 0.0022 | 0.0120 | 0.0073 |
+| 0.3 | 0.0021 | 0.0108 | 0.0068 |
+| 0.4 | 0.0021 | 0.0101 | 0.0061 |
+| 0.5 | 0.0022 | 0.0105 | 0.0059 |
+| 0.6 | 0.0021 | 0.0091 | 0.0052 |
+| 0.7 | 0.0019 | 0.0084 | 0.0050 |
+| 0.8 | 0.0021 | 0.0089 | 0.0053 |
+| 0.9 | 0.0021 | 0.0089 | 0.0053 |
+| 1.0 | 0.0021 | 0.0089 | 0.0053 |
 
 </div>
 
@@ -454,13 +488,13 @@ The best alpha by NDCG@10 in the included run is:
 
 | Field | Value |
 |---|---|
-| Best alpha | 0.0 |
-| Interpretation | Content-only blend |
-| Best alpha NDCG@10 | 0.0272 |
+| Best alpha | 0.1 |
+| Interpretation | Mostly content with a small collaborative contribution |
+| Best alpha NDCG@10 | 0.0073 |
 
 </div>
 
-This means the current synthetic dataset does not benefit from adding collaborative scores to the content-based ranking. The README reports this honestly instead of claiming the hybrid model is automatically better.
+This means the current synthetic dataset benefits only marginally from adding collaborative scores to the content-based ranking. The README reports this honestly instead of claiming the hybrid model is automatically better.
 
 ---
 
@@ -499,13 +533,25 @@ Example recommendations for one sample user:
 
 | Rank | Movie | Genres | Score | Reason |
 |---|---|---|---|---|
-| 1 | Movie 0045 | Crime | 0.6320 | Shares liked genre signals: Crime. |
-| 2 | Movie 0049 | Comedy, Sci-Fi | 0.5911 | Shares liked genre signals: Comedy. |
-| 3 | Movie 0300 | Romance | 0.5345 | Shares liked genre signals: Romance. |
+| 1 | Movie 0959 | Sci-Fi, Western | 0.6343 | Shares liked genre signals: Sci-Fi, Western. |
+| 2 | Movie 0952 | Horror, Sci-Fi, Western | 0.5297 | Shares liked genre signals: Horror, Sci-Fi, Western. |
+| 3 | Movie 0541 | Mystery, Sci-Fi, War | 0.5157 | Shares liked genre signals: Mystery, Sci-Fi, War. |
 
 </div>
 
 The explanation strings are simple genre-overlap summaries. They are not causal explanations, but they make the recommendation output easier to inspect.
+
+### Recommend for a single user
+
+To generate recommendations for one user on demand, use the inference command.
+Unlike the evaluation workflow, it trains on all available ratings and returns a
+ranked table for the requested user:
+
+```bash
+python src/recommend.py --ratings data/ratings.csv --movies data/movies.csv --user 1 --k 10
+```
+
+Add `--outdir outputs` to also write the CSV and text files for that user.
 
 ---
 
@@ -520,10 +566,12 @@ The evaluation layer uses ranking metrics designed for top-K recommendation task
 | Precision@K | Measures how many recommended movies are relevant |
 | Recall@K | Measures how many relevant held-out movies are recovered |
 | NDCG@K | Rewards relevant movies appearing higher in the ranking |
+| MAP@K | Mean average precision across users |
+| MRR@K | Mean reciprocal rank of the first relevant item |
 
 </div>
 
-For this project, a relevant held-out movie is a test-set movie with rating greater than or equal to 4.
+For this project, a relevant held-out movie is a test-set movie with rating greater than or equal to 4. All ranking metrics are recorded in `outputs/metrics.json`, and `metrics.py` includes a bootstrap helper for computing confidence intervals over per-user scores.
 
 The main metrics are saved in:
 
@@ -561,7 +609,7 @@ Important interpretation:
 | Alpha Sweep |
 |---|
 | ![Alpha sweep](outputs/alpha_sweep.png) |
-| **Analysis:** The alpha sweep compares content-only, collaborative-only, and blended recommendation scores. In the included run, content-only ranking performs best among the tested alpha values. |
+| **Analysis:** The alpha sweep compares content-only, collaborative-only, and blended recommendation scores. In the included run, a mostly content-based blend (alpha = 0.1) performs best among the tested alpha values. |
 
 </div>
 
@@ -623,14 +671,21 @@ The project separates core responsibilities across focused modules.
 | Module | Purpose |
 |---|---|
 | `data/generate_ratings.py` | Generates deterministic synthetic movie and ratings data |
-| `src/utils.py` | Handles user-level train/test split and user-item matrix construction |
-| `src/baselines.py` | Builds simple recommender baseline score vectors |
-| `src/build_recommender.py` | Runs modeling, evaluation, alpha sweep, plots, and sample outputs |
-| `tests/` | Validates data generation, metrics, recommendations, baselines, alpha sweep, and SVD scoring |
+| `data/load_movielens.py` | Converts MovieLens data into the project schema |
+| `src/utils.py` | User-level train/test split and user-item matrix construction |
+| `src/baselines.py` | Simple recommender baseline score vectors |
+| `src/models.py` | Content, collaborative (SVD), and hybrid ranking |
+| `src/metrics.py` | Ranking metrics (Precision/Recall/NDCG/MAP/MRR), alpha sweep, bootstrap CI |
+| `src/reporting.py` | Recommendation tables and genre-based explanations |
+| `src/plots.py` | Visual reports for ratings, top movies, and the alpha sweep |
+| `src/io_utils.py` | Output directory and recommendation file writing |
+| `src/build_recommender.py` | Thin CLI orchestrator for the evaluation workflow |
+| `src/recommend.py` | Inference CLI: recommendations for a single user |
+| `tests/` | Unit tests plus an end-to-end pipeline test |
 
 </div>
 
-The current design is intentionally compact for a portfolio project. A larger production system would likely split the modeling, evaluation, plotting, and output-writing logic into additional modules.
+The workflow is split into focused modules (models, metrics, reporting, plots, IO) with a thin CLI orchestrator, so each responsibility can be tested in isolation.
 
 The source is formatted with black, linted with ruff, and type-checked with mypy. These checks run in CI and are configured in `pyproject.toml`.
 
@@ -675,6 +730,8 @@ It should not be used as-is for:
 - user profiling
 - high-stakes content recommendation
 
+See [MODEL_CARD.md](MODEL_CARD.md) for intended use, data, evaluation, and limitations.
+
 Any real deployment would require real interaction data, privacy review, online experimentation, monitoring, ranking constraints, feedback-loop analysis, and product governance.
 
 ---
@@ -683,19 +740,14 @@ Any real deployment would require real interaction data, privacy review, online 
 
 Potential next improvements:
 
-- Add optional MovieLens dataset support
 - Add time-based train/test splitting
 - Add implicit-feedback models such as ALS or BPR
 - Add item metadata beyond genres
 - Add user-profile summaries
-- Add MAP@K and MRR@K
-- Add confidence intervals for ranking metrics
 - Add cold-start user and cold-start item evaluation
-- Add model cards for recommender limitations
 - Add FastAPI recommendation endpoint
 - Add Streamlit demo for interactive user recommendations
 - Add Docker support
-- Refactor the main workflow into smaller modeling and reporting modules
 
 ---
 
