@@ -12,7 +12,6 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 
-
 BASELINE_NAMES = (
     "random",
     "most_popular",
@@ -101,9 +100,9 @@ def build_baseline_scores(
     stats = compute_item_statistics(train, n_items=n_items)
     rng = np.random.default_rng(seed)
 
-    bayesian_average = (
-        stats.rating_sum + bayesian_prior_weight * stats.global_mean
-    ) / (stats.rating_count + bayesian_prior_weight)
+    bayesian_average = (stats.rating_sum + bayesian_prior_weight * stats.global_mean) / (
+        stats.rating_count + bayesian_prior_weight
+    )
 
     return {
         "random": rng.random(n_items),
