@@ -115,8 +115,7 @@ def make_ratings(
     # A plain set has process-dependent ordering and can change generated
     # ratings even with the same random seed.
     genre_to_vec = {
-        genre: rng.normal(0, 0.6, size=latent_dim)
-        for genre in _all_genres_from_movies(movies)
+        genre: rng.normal(0, 0.6, size=latent_dim) for genre in _all_genres_from_movies(movies)
     }
 
     item_bias = rng.normal(0, 0.3, size=n_items)
