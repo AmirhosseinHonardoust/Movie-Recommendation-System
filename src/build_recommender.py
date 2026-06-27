@@ -15,7 +15,14 @@ import pandas as pd
 
 from baselines import build_baseline_scores
 from io_utils import ensure_outdir, write_recommendation_outputs
-from metrics import ALPHA_SWEEP_VALUES, best_alpha_by_metric, build_alpha_sweep, ndcg_at_k
+from metrics import (
+    ALPHA_SWEEP_VALUES,
+    average_precision_at_k,
+    best_alpha_by_metric,
+    build_alpha_sweep,
+    ndcg_at_k,
+    reciprocal_rank_at_k,
+)
 from models import build_content_item_sims, collaborative_scores, recommend_for_user
 from plots import plot_alpha_sweep, plot_hist, top_popular
 from reporting import build_recommendation_table
@@ -67,7 +74,7 @@ def main() -> None:
             truth[uid - 1] = rel
 
     def aggregate_ranking_metrics(recommendations_by_user):
-        precs, recs, ndcgs = [], [], []
+        precs, recs, ndcgs, maps, mrrs = [], [], [], [], []
         for u, top_idx in recommendations_by_user():
             relevant = truth.get(u, set())
             if len(relevant) == 0:
@@ -76,10 +83,14 @@ def main() -> None:
             precs.append(hits / args.k)
             recs.append(hits / len(relevant))
             ndcgs.append(ndcg_at_k(top_idx, relevant, args.k))
+            maps.append(average_precision_at_k(top_idx, relevant, args.k))
+            mrrs.append(reciprocal_rank_at_k(top_idx, relevant, args.k))
         return {
             "precision": float(np.mean(precs)) if precs else 0.0,
             "recall": float(np.mean(recs)) if recs else 0.0,
             "ndcg": float(np.mean(ndcgs)) if ndcgs else 0.0,
+            "map": float(np.mean(maps)) if maps else 0.0,
+            "mrr": float(np.mean(mrrs)) if mrrs else 0.0,
         }
 
     def eval_model(alpha_use):
