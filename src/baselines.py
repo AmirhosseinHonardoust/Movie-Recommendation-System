@@ -7,7 +7,6 @@ interpreting collaborative, content-based, and hybrid recommendation metrics.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict
 
 import numpy as np
 import pandas as pd
@@ -91,7 +90,7 @@ def build_baseline_scores(
     n_items: int,
     seed: int = 42,
     bayesian_prior_weight: float = 20.0,
-) -> Dict[str, np.ndarray]:
+) -> dict[str, np.ndarray]:
     """Return score vectors for simple recommender baselines.
 
     Each vector has one score per item. The same vector is used for every user;

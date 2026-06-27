@@ -6,7 +6,7 @@ from scipy.sparse import csr_matrix
 def train_test_split_by_user(ratings: pd.DataFrame, test_k: int = 5, seed: int = 42):
     rng = np.random.default_rng(seed)
     train_rows, test_rows = [], []
-    for uid, grp in ratings.groupby("user_id"):
+    for _uid, grp in ratings.groupby("user_id"):
         idx = np.arange(len(grp))
         if len(idx) <= test_k:
             train_rows.append(grp)
