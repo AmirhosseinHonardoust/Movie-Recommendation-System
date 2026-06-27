@@ -1,11 +1,11 @@
 rank	movie_id	title	genres	score	reason
-1	171	Movie 0171	Adventure,Mystery,War	0.6104	Shares liked genre signals: Adventure, Mystery, War.
-2	109	Movie 0109	Adventure,Drama,Western	0.5545	Shares liked genre signals: Adventure.
-3	246	Movie 0246	Fantasy,Horror	0.5438	Shares liked genre signals: Fantasy.
-4	98	Movie 0098	Adventure,Animation,Romance	0.5324	Shares liked genre signals: Adventure, Animation.
-5	177	Movie 0177	Adventure	0.5251	Shares liked genre signals: Adventure.
-6	181	Movie 0181	Drama,Romance	0.5084	High hybrid score among unseen movies; genres: Drama, Romance.
-7	295	Movie 0295	Animation	0.4951	Shares liked genre signals: Animation.
-8	150	Movie 0150	Romance,Sci-Fi,War	0.4851	Shares liked genre signals: War.
-9	200	Movie 0200	Drama	0.4666	High hybrid score among unseen movies; genres: Drama.
-10	258	Movie 0258	Action,Romance,Sci-Fi	0.4400	High hybrid score among unseen movies; genres: Action, Romance, Sci-Fi.
+1	915	Movie 0915	Mystery	0.7888	Shares liked genre signals: Mystery.
+2	1097	Movie 1097	Romance,Sci-Fi,War	0.6814	Shares liked genre signals: Romance, War.
+3	77	Movie 0077	Adventure,Crime	0.6559	Shares liked genre signals: Adventure, Crime.
+4	122	Movie 0122	Sci-Fi	0.5452	High hybrid score among unseen movies; genres: Sci-Fi.
+5	952	Movie 0952	Horror,Sci-Fi,Western	0.5388	Shares liked genre signals: Horror, Western.
+6	1006	Movie 1006	Documentary,Mystery,Sci-Fi	0.5232	Shares liked genre signals: Documentary, Mystery.
+7	561	Movie 0561	Crime,War	0.5077	Shares liked genre signals: Crime, War.
+8	83	Movie 0083	Action	0.4850	Shares liked genre signals: Action.
+9	238	Movie 0238	Adventure,Drama,Western	0.4750	Shares liked genre signals: Adventure, Drama, Western.
+10	1152	Movie 1152	Adventure	0.4625	Shares liked genre signals: Adventure.

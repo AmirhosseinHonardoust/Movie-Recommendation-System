@@ -1,11 +1,11 @@
 rank	movie_id	title	genres	score	reason
-1	43	Movie 0043	Animation,Drama,War	0.7839	Shares liked genre signals: Drama.
-2	26	Movie 0026	Drama,Horror,Romance	0.5767	Shares liked genre signals: Drama, Horror, Romance.
-3	135	Movie 0135	Crime	0.4600	High hybrid score among unseen movies; genres: Crime.
-4	138	Movie 0138	Animation	0.4453	High hybrid score among unseen movies; genres: Animation.
-5	176	Movie 0176	Adventure,Comedy,Thriller	0.4209	Shares liked genre signals: Comedy.
-6	209	Movie 0209	Action,Comedy,Western	0.4179	Shares liked genre signals: Comedy, Western.
-7	177	Movie 0177	Adventure	0.4111	High hybrid score among unseen movies; genres: Adventure.
-8	282	Movie 0282	Mystery,Romance,Sci-Fi	0.3803	Shares liked genre signals: Romance, Sci-Fi.
-9	237	Movie 0237	Fantasy,Romance	0.3745	Shares liked genre signals: Fantasy, Romance.
-10	215	Movie 0215	Action	0.3734	High hybrid score among unseen movies; genres: Action.
+1	800	Movie 0800	Crime,Western	0.7900	Shares liked genre signals: Crime, Western.
+2	410	Movie 0410	Action,Fantasy,Western	0.6739	Shares liked genre signals: Action, Fantasy, Western.
+3	9	Movie 0009	Adventure,Comedy	0.6587	Shares liked genre signals: Adventure, Comedy.
+4	846	Movie 0846	Adventure,Crime	0.6384	Shares liked genre signals: Adventure, Crime.
+5	774	Movie 0774	Adventure,Animation,Mystery	0.6289	Shares liked genre signals: Adventure, Animation.
+6	465	Movie 0465	Horror,War	0.6159	Shares liked genre signals: Horror, War.
+7	271	Movie 0271	Animation,Fantasy,Thriller	0.5935	Shares liked genre signals: Animation, Fantasy, Thriller.
+8	713	Movie 0713	Horror	0.5918	Shares liked genre signals: Horror.
+9	738	Movie 0738	Sci-Fi	0.5635	Shares liked genre signals: Sci-Fi.
+10	602	Movie 0602	Adventure,Animation,Crime	0.5591	Shares liked genre signals: Adventure, Animation, Crime.

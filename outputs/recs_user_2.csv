@@ -1,11 +1,11 @@
 rank,user_id,movie_id,title,genres,score,reason
-1,2,171,Movie 0171,"Adventure,Mystery,War",0.610367,"Shares liked genre signals: Adventure, Mystery, War."
-2,2,109,Movie 0109,"Adventure,Drama,Western",0.554533,Shares liked genre signals: Adventure.
-3,2,246,Movie 0246,"Fantasy,Horror",0.543831,Shares liked genre signals: Fantasy.
-4,2,98,Movie 0098,"Adventure,Animation,Romance",0.53238,"Shares liked genre signals: Adventure, Animation."
-5,2,177,Movie 0177,Adventure,0.525117,Shares liked genre signals: Adventure.
-6,2,181,Movie 0181,"Drama,Romance",0.508414,"High hybrid score among unseen movies; genres: Drama, Romance."
-7,2,295,Movie 0295,Animation,0.495088,Shares liked genre signals: Animation.
-8,2,150,Movie 0150,"Romance,Sci-Fi,War",0.485132,Shares liked genre signals: War.
-9,2,200,Movie 0200,Drama,0.466589,High hybrid score among unseen movies; genres: Drama.
-10,2,258,Movie 0258,"Action,Romance,Sci-Fi",0.439954,"High hybrid score among unseen movies; genres: Action, Romance, Sci-Fi."
+1,2,915,Movie 0915,Mystery,0.78883,Shares liked genre signals: Mystery.
+2,2,1097,Movie 1097,"Romance,Sci-Fi,War",0.681418,"Shares liked genre signals: Romance, War."
+3,2,77,Movie 0077,"Adventure,Crime",0.655878,"Shares liked genre signals: Adventure, Crime."
+4,2,122,Movie 0122,Sci-Fi,0.545209,High hybrid score among unseen movies; genres: Sci-Fi.
+5,2,952,Movie 0952,"Horror,Sci-Fi,Western",0.538773,"Shares liked genre signals: Horror, Western."
+6,2,1006,Movie 1006,"Documentary,Mystery,Sci-Fi",0.523164,"Shares liked genre signals: Documentary, Mystery."
+7,2,561,Movie 0561,"Crime,War",0.507717,"Shares liked genre signals: Crime, War."
+8,2,83,Movie 0083,Action,0.484969,Shares liked genre signals: Action.
+9,2,238,Movie 0238,"Adventure,Drama,Western",0.475038,"Shares liked genre signals: Adventure, Drama, Western."
+10,2,1152,Movie 1152,Adventure,0.462528,Shares liked genre signals: Adventure.
