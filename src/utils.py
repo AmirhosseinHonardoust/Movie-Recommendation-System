@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix
 
 
-def train_test_split_by_user(ratings: pd.DataFrame, test_k: int = 5, seed: int = 42):
+def train_test_split_by_user(
+    ratings: pd.DataFrame, test_k: int = 5, seed: int = 42
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     rng = np.random.default_rng(seed)
     train_rows, test_rows = [], []
     for _uid, grp in ratings.groupby("user_id"):
@@ -25,7 +29,7 @@ def train_test_split_by_user(ratings: pd.DataFrame, test_k: int = 5, seed: int =
     return train, test
 
 
-def build_ui_matrix(ratings: pd.DataFrame, n_users: int, n_items: int):
+def build_ui_matrix(ratings: pd.DataFrame, n_users: int, n_items: int) -> csr_matrix:
     rows = ratings["user_id"].values - 1
     cols = ratings["movie_id"].values - 1
     data = ratings["rating"].values.astype(float)
