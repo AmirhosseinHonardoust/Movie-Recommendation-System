@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = ROOT / "src"
 sys.path.insert(0, str(SRC_DIR))
 
-from build_recommender import collaborative_scores
+from models import collaborative_scores
 
 
 class CollaborativeScoringTests(unittest.TestCase):

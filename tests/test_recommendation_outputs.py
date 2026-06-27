@@ -12,11 +12,11 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = ROOT / "src"
 sys.path.insert(0, str(SRC_DIR))
 
-from build_recommender import (
+from io_utils import write_recommendation_outputs
+from reporting import (
     build_recommendation_table,
     liked_genre_profile,
     recommendation_reason,
-    write_recommendation_outputs,
 )
 
 

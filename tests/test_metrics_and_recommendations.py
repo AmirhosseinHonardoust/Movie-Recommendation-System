@@ -11,11 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = ROOT / "src"
 sys.path.insert(0, str(SRC_DIR))
 
-from build_recommender import (
-    build_content_item_sims,
-    ndcg_at_k,
-    recommend_for_user,
-)
+from metrics import ndcg_at_k
+from models import build_content_item_sims, recommend_for_user
 
 
 class MetricsAndRecommendationTests(unittest.TestCase):
