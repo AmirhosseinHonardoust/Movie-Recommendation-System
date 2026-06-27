@@ -537,6 +537,7 @@ Important interpretation:
 - Baselines are included so the learned recommenders can be judged honestly.
 - NDCG@10 is the main comparison metric in the included outputs.
 - Strong performance on this synthetic data does not imply real-world movie recommendation quality.
+- The workflow is deterministic for a fixed seed and a fixed environment. The exact numbers in the tables and in `outputs/` correspond to the dependency versions pinned in `requirements.txt`; newer NumPy or scikit-learn releases can shift the values slightly while keeping runs reproducible.
 
 ---
 
@@ -580,9 +581,21 @@ Compile source files:
 python -m compileall data src tests
 ```
 
+Lint, format, and type-check (install the dev tools first):
+
+```bash
+pip install -r requirements-dev.txt
+ruff check .
+black --check .
+mypy
+```
+
+The lint, format, and type-check settings live in `pyproject.toml`.
+
 The GitHub Actions workflow checks:
 
 - dependency installation
+- lint, format, and type checking (ruff, black, mypy)
 - source compilation
 - unit tests
 - synthetic data generation
@@ -618,6 +631,8 @@ The project separates core responsibilities across focused modules.
 </div>
 
 The current design is intentionally compact for a portfolio project. A larger production system would likely split the modeling, evaluation, plotting, and output-writing logic into additional modules.
+
+The source is formatted with black, linted with ruff, and type-checked with mypy. These checks run in CI and are configured in `pyproject.toml`.
 
 ---
 
@@ -693,6 +708,7 @@ Potential next improvements:
 - scikit-learn
 - matplotlib
 - unittest
+- ruff, black, mypy
 - GitHub Actions
 
 ---
