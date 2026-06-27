@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = ROOT / "src"
 sys.path.insert(0, str(SRC_DIR))
 
-from metrics import ndcg_at_k
+from metrics import average_precision_at_k, ndcg_at_k, reciprocal_rank_at_k
 from models import build_content_item_sims, recommend_for_user
 
 
@@ -27,6 +27,28 @@ class MetricsAndRecommendationTests(unittest.TestCase):
         self.assertGreater(partial, 0.0)
         self.assertLess(partial, perfect)
         self.assertEqual(miss, 0.0)
+
+    def test_average_precision_at_k_rewards_early_relevant_items(self) -> None:
+        relevant = {2, 4}
+
+        perfect = average_precision_at_k([2, 4, 1], relevant, k=3)
+        later = average_precision_at_k([1, 2, 4], relevant, k=3)
+        miss = average_precision_at_k([0, 1, 3], relevant, k=3)
+
+        self.assertAlmostEqual(perfect, 1.0)
+        self.assertGreater(perfect, later)
+        self.assertGreater(later, 0.0)
+        self.assertEqual(miss, 0.0)
+        self.assertEqual(average_precision_at_k([1], set(), k=3), 0.0)
+
+    def test_reciprocal_rank_at_k_uses_first_relevant_position(self) -> None:
+        relevant = {4}
+
+        self.assertAlmostEqual(reciprocal_rank_at_k([4, 1, 2], relevant, k=3), 1.0)
+        self.assertAlmostEqual(reciprocal_rank_at_k([1, 4, 2], relevant, k=3), 0.5)
+        self.assertAlmostEqual(reciprocal_rank_at_k([1, 2, 4], relevant, k=3), 1 / 3)
+        self.assertEqual(reciprocal_rank_at_k([1, 2, 3], relevant, k=3), 0.0)
+        self.assertEqual(reciprocal_rank_at_k([4], relevant, k=0), 0.0)
 
     def test_recommend_for_user_excludes_seen_items_and_sorts_scores(self) -> None:
         collab = np.array([0.1, 0.9, 0.3, 0.8, 0.2])

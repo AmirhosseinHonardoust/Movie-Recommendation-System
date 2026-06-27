@@ -33,7 +33,9 @@ class AlphaSweepTests(unittest.TestCase):
 
         sweep = build_alpha_sweep(fake_eval, alpha_values=[0.0, 0.4, 1.0])
 
-        self.assertEqual(list(sweep.columns), ["alpha", "precision", "recall", "ndcg"])
+        self.assertEqual(
+            list(sweep.columns), ["alpha", "precision", "recall", "ndcg", "map", "mrr"]
+        )
         self.assertEqual(sweep.shape[0], 3)
         self.assertEqual(sweep["alpha"].tolist(), [0.0, 0.4, 1.0])
         for metric in ["precision", "recall", "ndcg"]:
