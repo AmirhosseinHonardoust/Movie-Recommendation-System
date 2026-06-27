@@ -4,11 +4,10 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "SIM", "UP"]
-
-[tool.ruff.lint.per-file-ignores]
-# Tests insert ``src``/``data`` onto ``sys.path`` before importing the modules
-# under test, so the project-local imports intentionally follow that statement.
-"tests/*" = ["E402"]
+# E402 (import not at top) is intentional in the test modules, which must insert
+# src/ and data/ onto sys.path before importing the code under test. Ignored
+# project-wide because the source modules contain no such imports.
+ignore = ["E402"]
 
 [tool.black]
 line-length = 100
@@ -20,8 +19,6 @@ files = ["src", "data"]
 warn_unused_ignores = true
 warn_redundant_casts = true
 
-# pandas, scipy, and scikit-learn do not ship type stubs that are available in
-# CI, so imports from them are treated as untyped rather than hard errors.
 [[tool.mypy.overrides]]
 module = ["pandas.*", "scipy.*", "sklearn.*", "matplotlib.*"]
 ignore_missing_imports = true
