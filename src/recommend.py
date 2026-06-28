@@ -14,7 +14,17 @@ import numpy as np
 import pandas as pd
 
 from io_utils import ensure_outdir, write_recommendation_outputs
-from models import build_content_item_sims, collaborative_scores, recommend_for_user
+from models import (
+    CollaborativeModel,
+    build_content_item_sims,
+    fit_collaborative_model,
+    recommend_for_user,
+)
+from persistence import (
+    choose_n_components,
+    collaborative_model_from_dict,
+    load_model,
+)
 from reporting import build_recommendation_table
 from utils import build_ui_matrix
 
@@ -26,11 +36,14 @@ def recommend_for_user_id(
     k: int = 10,
     alpha: float = 0.6,
     seed: int = 42,
+    collab_model: CollaborativeModel | None = None,
 ) -> pd.DataFrame:
     """Return a top-``k`` recommendation table for ``user_id``.
 
     Movies the user has already rated are excluded. Liked movies (rating >= 4)
-    drive the content signal and the per-row explanation.
+    drive the content signal and the per-row explanation. When ``collab_model``
+    is provided (e.g. loaded from a saved artifact), its factors are used
+    directly instead of refitting the collaborative model.
     """
     if user_id not in set(ratings["user_id"].unique()):
         raise ValueError(f"user_id {user_id} is not present in the ratings")
@@ -38,10 +51,13 @@ def recommend_for_user_id(
     n_users = int(ratings["user_id"].max())
     n_items = movies["movie_id"].nunique()
 
-    ui = build_ui_matrix(ratings, n_users, n_items)
     item_sims, _ = build_content_item_sims(movies)
-    n_comp = max(2, min(50, min(ui.shape) - 1))
-    collab = collaborative_scores(ui, n_components=n_comp, seed=seed)
+    if collab_model is None:
+        ui = build_ui_matrix(ratings, n_users, n_items)
+        n_comp = choose_n_components(n_users, n_items)
+        collab = fit_collaborative_model(ui, n_components=n_comp, seed=seed).reconstruct()
+    else:
+        collab = collab_model.reconstruct()
 
     u = user_id - 1
     user_ratings = ratings[ratings["user_id"] == user_id]
@@ -69,13 +85,26 @@ def main() -> None:
     ap.add_argument("--k", type=int, default=10)
     ap.add_argument("--alpha", type=float, default=0.6)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument(
+        "--model",
+        default=None,
+        help="Load a saved model (from train.py) and serve without retraining.",
+    )
     ap.add_argument("--outdir", default=None, help="If set, also write CSV/TXT outputs here.")
     args = ap.parse_args()
 
     ratings = pd.read_csv(args.ratings)
     movies = pd.read_csv(args.movies)
+
+    collab_model = None
+    alpha = args.alpha
+    if args.model:
+        model_dict = load_model(args.model)
+        collab_model = collaborative_model_from_dict(model_dict)
+        alpha = float(model_dict["params"].get("alpha", args.alpha))
+
     recs = recommend_for_user_id(
-        ratings, movies, args.user, k=args.k, alpha=args.alpha, seed=args.seed
+        ratings, movies, args.user, k=args.k, alpha=alpha, seed=args.seed, collab_model=collab_model
     )
 
     if args.outdir:
