@@ -9,9 +9,14 @@ recommender.
 
 - **Task:** top-K movie recommendation (ranking).
 - **Approaches compared:** content-based (TF-IDF over genres), collaborative
-  (TruncatedSVD reconstruction), and a hybrid blend controlled by `alpha`.
+  (user-mean-centered TruncatedSVD reconstruction), and a hybrid blend
+  controlled by `alpha`.
 - **Baselines:** random, most-popular, average-rating, Bayesian-average, and
   positive-count.
+- **Persistence:** the trained collaborative model is saved as a portable JSON
+  artifact (`outputs/model.json`) — user factors, item components, and per-user
+  means — and served without retraining. JSON is used instead of pickle so the
+  artifact is human-inspectable and safe to load.
 
 ## Intended use
 
@@ -44,10 +49,13 @@ recommender.
 - **Reproducibility:** deterministic for a fixed seed and environment. Exact
   numbers track the dependency versions pinned in `requirements.txt`.
 
-On the included synthetic dataset, simple popularity/prior baselines are
-competitive with (and sometimes beat) the learned models on NDCG@K. This is
-reported honestly rather than hidden; it reflects the synthetic data, not a
-claim about real-world quality.
+On the included synthetic dataset, the hybrid and collaborative models lead on
+NDCG@K, ahead of every popularity and rating-prior baseline. The improvement
+comes from centering each user's ratings by their own mean before
+factorization, so the latent factors model preference rather than overall
+rating level. The best blend (alpha = 0.3) beats both pure content and pure
+collaborative ranking. These remain synthetic-data results and are not a claim
+about real-world quality.
 
 ## Limitations and ethical considerations
 

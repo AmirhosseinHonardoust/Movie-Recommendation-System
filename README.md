@@ -173,6 +173,7 @@ Movie-Recommendation-System/
 │   ├── alpha_sweep.png
 │   ├── baseline_comparison.csv
 │   ├── metrics.json
+│   ├── model.json
 │   ├── ratings_hist.png
 │   ├── top_movies.png
 │   ├── recs_user_1.csv
@@ -188,9 +189,11 @@ Movie-Recommendation-System/
 │   ├── io_utils.py
 │   ├── metrics.py
 │   ├── models.py
+│   ├── persistence.py
 │   ├── plots.py
 │   ├── recommend.py
 │   ├── reporting.py
+│   ├── train.py
 │   └── utils.py
 │
 ├── tests/
@@ -200,6 +203,7 @@ Movie-Recommendation-System/
 │   ├── test_data_generation.py
 │   ├── test_metrics_and_recommendations.py
 │   ├── test_movielens_loader.py
+│   ├── test_persistence.py
 │   ├── test_pipeline_e2e.py
 │   ├── test_recommend.py
 │   ├── test_recommendation_outputs.py
@@ -428,12 +432,12 @@ Example ranking results from the included synthetic run:
 
 | Model | Precision@10 | Recall@10 | NDCG@10 |
 |---|---|---|---|
+| `hybrid` | 0.0050 | 0.0227 | 0.0137 |
+| `collaborative` | 0.0042 | 0.0215 | 0.0130 |
 | `positive_count` | 0.0028 | 0.0168 | 0.0097 |
 | `average_rating` | 0.0029 | 0.0180 | 0.0086 |
 | `bayesian_average` | 0.0028 | 0.0175 | 0.0085 |
 | `content` | 0.0026 | 0.0129 | 0.0072 |
-| `collaborative` | 0.0021 | 0.0089 | 0.0053 |
-| `hybrid` | 0.0021 | 0.0091 | 0.0052 |
 | `most_popular` | 0.0021 | 0.0086 | 0.0049 |
 | `random` | 0.0014 | 0.0079 | 0.0038 |
 
@@ -441,7 +445,7 @@ Example ranking results from the included synthetic run:
 
 MAP@10 and MRR@10 are also recorded for every model in `outputs/metrics.json` and `outputs/baseline_comparison.csv`.
 
-On the current synthetic dataset, the **positive-count baseline has the strongest NDCG@10**. That is useful information: it shows the synthetic dataset currently rewards simple item-level popularity and rating priors more than the learned collaborative model.
+On the current synthetic dataset, the **hybrid model has the strongest NDCG@10**, with the collaborative model close behind; both clearly beat every popularity and rating-prior baseline. The collaborative model centers each user's ratings by their own mean before factorization, which lets the latent factors capture preference rather than overall rating level — the change that lifts it above the baselines (see `MODEL_CARD.md`).
 
 > These values are from a synthetic demo dataset and should not be interpreted as real-world recommendation performance. They are reproducible from the committed `data/` with the dependency versions pinned in `requirements.txt`.
 
@@ -469,16 +473,16 @@ Example alpha-sweep results from the included run:
 | Alpha | Precision@10 | Recall@10 | NDCG@10 |
 |---|---|---|---|
 | 0.0 | 0.0026 | 0.0129 | 0.0072 |
-| 0.1 | 0.0024 | 0.0132 | 0.0073 |
-| 0.2 | 0.0022 | 0.0120 | 0.0073 |
-| 0.3 | 0.0021 | 0.0108 | 0.0068 |
-| 0.4 | 0.0021 | 0.0101 | 0.0061 |
-| 0.5 | 0.0022 | 0.0105 | 0.0059 |
-| 0.6 | 0.0021 | 0.0091 | 0.0052 |
-| 0.7 | 0.0019 | 0.0084 | 0.0050 |
-| 0.8 | 0.0021 | 0.0089 | 0.0053 |
-| 0.9 | 0.0021 | 0.0089 | 0.0053 |
-| 1.0 | 0.0021 | 0.0089 | 0.0053 |
+| 0.1 | 0.0033 | 0.0153 | 0.0096 |
+| 0.2 | 0.0049 | 0.0230 | 0.0127 |
+| 0.3 | 0.0053 | 0.0259 | 0.0146 |
+| 0.4 | 0.0049 | 0.0236 | 0.0134 |
+| 0.5 | 0.0049 | 0.0250 | 0.0140 |
+| 0.6 | 0.0050 | 0.0227 | 0.0137 |
+| 0.7 | 0.0049 | 0.0230 | 0.0142 |
+| 0.8 | 0.0046 | 0.0223 | 0.0136 |
+| 0.9 | 0.0046 | 0.0227 | 0.0135 |
+| 1.0 | 0.0042 | 0.0215 | 0.0130 |
 
 </div>
 
@@ -488,13 +492,13 @@ The best alpha by NDCG@10 in the included run is:
 
 | Field | Value |
 |---|---|
-| Best alpha | 0.1 |
-| Interpretation | Mostly content with a small collaborative contribution |
-| Best alpha NDCG@10 | 0.0073 |
+| Best alpha | 0.3 |
+| Interpretation | A genuine blend — mostly content with a substantial collaborative contribution |
+| Best alpha NDCG@10 | 0.0146 |
 
 </div>
 
-This means the current synthetic dataset benefits only marginally from adding collaborative scores to the content-based ranking. The README reports this honestly instead of claiming the hybrid model is automatically better.
+The blend at alpha = 0.3 beats both pure content (alpha = 0) and pure collaborative (alpha = 1), so combining the two signals genuinely helps on this dataset rather than either signal alone.
 
 ---
 
@@ -533,9 +537,9 @@ Example recommendations for one sample user:
 
 | Rank | Movie | Genres | Score | Reason |
 |---|---|---|---|---|
-| 1 | Movie 0959 | Sci-Fi, Western | 0.6343 | Shares liked genre signals: Sci-Fi, Western. |
-| 2 | Movie 0952 | Horror, Sci-Fi, Western | 0.5297 | Shares liked genre signals: Horror, Sci-Fi, Western. |
-| 3 | Movie 0541 | Mystery, Sci-Fi, War | 0.5157 | Shares liked genre signals: Mystery, Sci-Fi, War. |
+| 1 | Movie 0019 | Comedy | 2.1429 | Shares liked genre signals: Comedy. |
+| 2 | Movie 0736 | Comedy, Drama | 2.0949 | Shares liked genre signals: Comedy, Drama. |
+| 3 | Movie 0463 | War | 1.9954 | Shares liked genre signals: War. |
 
 </div>
 
@@ -552,6 +556,26 @@ python src/recommend.py --ratings data/ratings.csv --movies data/movies.csv --us
 ```
 
 Add `--outdir outputs` to also write the CSV and text files for that user.
+
+### Train once, serve many (model persistence)
+
+For a train/serve split, fit the model once and save it as a portable JSON
+artifact, then serve recommendations from the artifact without retraining:
+
+```bash
+# Offline: fit on all ratings and save the model
+python src/train.py --ratings data/ratings.csv --movies data/movies.csv --out outputs/model.json
+
+# Online: load the saved model and recommend for a user (no retraining)
+python src/recommend.py --ratings data/ratings.csv --movies data/movies.csv --user 1 --model outputs/model.json
+```
+
+The artifact (`outputs/model.json`) stores the collaborative model's user
+factors, item components, and per-user means. It is plain JSON, **not pickle**,
+so it is human-inspectable and safe to load. Recommendations served from the
+saved model are identical to a fresh in-memory training run (verified by a
+test). Content similarity is recomputed from the movie metadata at load time,
+so it is not stored in the artifact.
 
 ---
 
@@ -609,7 +633,7 @@ Important interpretation:
 | Alpha Sweep |
 |---|
 | ![Alpha sweep](outputs/alpha_sweep.png) |
-| **Analysis:** The alpha sweep compares content-only, collaborative-only, and blended recommendation scores. In the included run, a mostly content-based blend (alpha = 0.1) performs best among the tested alpha values. |
+| **Analysis:** The alpha sweep compares content-only, collaborative-only, and blended recommendation scores. In the included run, a blend at alpha = 0.3 performs best, beating both pure content and pure collaborative ranking. |
 
 </div>
 
@@ -680,8 +704,10 @@ The project separates core responsibilities across focused modules.
 | `src/plots.py` | Visual reports for ratings, top movies, and the alpha sweep |
 | `src/io_utils.py` | Output directory and recommendation file writing |
 | `src/build_recommender.py` | Thin CLI orchestrator for the evaluation workflow |
-| `src/recommend.py` | Inference CLI: recommendations for a single user |
-| `tests/` | Unit tests plus an end-to-end pipeline test |
+| `src/recommend.py` | Inference CLI: recommendations for a single user (optionally from a saved model) |
+| `src/train.py` | Offline training CLI that saves the model artifact |
+| `src/persistence.py` | JSON model save/load and training helpers (no pickle) |
+| `tests/` | Unit tests, persistence round-trip, and an end-to-end pipeline test |
 
 </div>
 
@@ -699,11 +725,10 @@ This project has important limitations:
 - The project is not benchmarked against MovieLens by default
 - The genre metadata is simple and limited
 - The collaborative model is intentionally lightweight
-- The hybrid model does not beat the best simple baseline on the included synthetic run
 - Recommendation reasons are heuristic genre summaries
 - No implicit-feedback ranking model is included
 - No online evaluation or A/B testing is included
-- No real-time serving API is included
+- A saved-model serve path is included, but there is no real-time/web serving API
 - No privacy, fairness, or product-safety review is included
 
 The project is strongest as a portfolio demonstration of recommender-system workflow design, baseline comparison, and ranking evaluation.

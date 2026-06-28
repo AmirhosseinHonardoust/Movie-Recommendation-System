@@ -1,11 +1,11 @@
 rank	movie_id	title	genres	score	reason
-1	959	Movie 0959	Sci-Fi,Western	0.6343	Shares liked genre signals: Sci-Fi, Western.
-2	952	Movie 0952	Horror,Sci-Fi,Western	0.5297	Shares liked genre signals: Horror, Sci-Fi, Western.
-3	541	Movie 0541	Mystery,Sci-Fi,War	0.5157	Shares liked genre signals: Mystery, Sci-Fi, War.
-4	1141	Movie 1141	Action,Documentary,Drama	0.4945	Shares liked genre signals: Action, Documentary, Drama.
-5	95	Movie 0095	Adventure,Romance,Sci-Fi	0.4909	Shares liked genre signals: Adventure, Sci-Fi.
-6	26	Movie 0026	Drama,Horror,Romance	0.4903	Shares liked genre signals: Drama, Horror.
-7	1022	Movie 1022	Crime,Drama	0.4861	Shares liked genre signals: Crime, Drama.
-8	40	Movie 0040	Animation	0.4803	Shares liked genre signals: Animation.
-9	96	Movie 0096	Western	0.4528	Shares liked genre signals: Western.
-10	786	Movie 0786	Drama,Mystery	0.4516	Shares liked genre signals: Drama, Mystery.
+1	19	Movie 0019	Comedy	2.1429	Shares liked genre signals: Comedy.
+2	736	Movie 0736	Comedy,Drama	2.0949	Shares liked genre signals: Comedy, Drama.
+3	463	Movie 0463	War	1.9954	Shares liked genre signals: War.
+4	1136	Movie 1136	Documentary	1.9907	Shares liked genre signals: Documentary.
+5	910	Movie 0910	Sci-Fi,War	1.9848	Shares liked genre signals: Sci-Fi, War.
+6	1039	Movie 1039	Action,Romance,Thriller	1.9712	Shares liked genre signals: Action, Thriller.
+7	497	Movie 0497	Animation,Comedy,War	1.9680	Shares liked genre signals: Animation, Comedy, War.
+8	612	Movie 0612	Documentary,Fantasy,Thriller	1.9673	Shares liked genre signals: Documentary, Fantasy, Thriller.
+9	189	Movie 0189	Crime,Fantasy,Western	1.9666	Shares liked genre signals: Crime, Fantasy, Western.
+10	773	Movie 0773	Adventure,Romance	1.9564	Shares liked genre signals: Adventure.
