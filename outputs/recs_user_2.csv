@@ -1,11 +1,11 @@
 rank,user_id,movie_id,title,genres,score,reason
-1,2,915,Movie 0915,Mystery,0.78883,Shares liked genre signals: Mystery.
-2,2,1097,Movie 1097,"Romance,Sci-Fi,War",0.681418,"Shares liked genre signals: Romance, War."
-3,2,77,Movie 0077,"Adventure,Crime",0.655878,"Shares liked genre signals: Adventure, Crime."
-4,2,122,Movie 0122,Sci-Fi,0.545209,High hybrid score among unseen movies; genres: Sci-Fi.
-5,2,952,Movie 0952,"Horror,Sci-Fi,Western",0.538773,"Shares liked genre signals: Horror, Western."
-6,2,1006,Movie 1006,"Documentary,Mystery,Sci-Fi",0.523164,"Shares liked genre signals: Documentary, Mystery."
-7,2,561,Movie 0561,"Crime,War",0.507717,"Shares liked genre signals: Crime, War."
-8,2,83,Movie 0083,Action,0.484969,Shares liked genre signals: Action.
-9,2,238,Movie 0238,"Adventure,Drama,Western",0.475038,"Shares liked genre signals: Adventure, Drama, Western."
-10,2,1152,Movie 1152,Adventure,0.462528,Shares liked genre signals: Adventure.
+1,2,602,Movie 0602,"Adventure,Animation,Crime",1.908814,"Shares liked genre signals: Adventure, Animation, Crime."
+2,2,1002,Movie 1002,Documentary,1.904563,Shares liked genre signals: Documentary.
+3,2,641,Movie 0641,Crime,1.887474,Shares liked genre signals: Crime.
+4,2,1055,Movie 1055,Crime,1.8866,Shares liked genre signals: Crime.
+5,2,943,Movie 0943,"Comedy,Crime,Western",1.883239,"Shares liked genre signals: Comedy, Crime, Western."
+6,2,82,Movie 0082,"Thriller,Western",1.880924,"Shares liked genre signals: Thriller, Western."
+7,2,6,Movie 0006,"Adventure,Fantasy,Romance",1.880741,"Shares liked genre signals: Adventure, Romance."
+8,2,649,Movie 0649,"Adventure,Sci-Fi,Thriller",1.874545,"Shares liked genre signals: Adventure, Thriller."
+9,2,797,Movie 0797,Crime,1.874415,Shares liked genre signals: Crime.
+10,2,300,Movie 0300,Romance,1.871415,Shares liked genre signals: Romance.
