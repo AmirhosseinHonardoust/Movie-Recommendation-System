@@ -1,5 +1,5 @@
 <div align="center">
-          
+              
 # Movie Recommendation System
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
