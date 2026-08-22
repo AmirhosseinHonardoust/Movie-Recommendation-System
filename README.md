@@ -19,7 +19,7 @@ A production-minded movie recommendation workflow for comparing **content-based 
 > The dataset is synthetic. The recommendation scores, baseline comparisons, and alpha-sweep results are designed to demonstrate recommender-system workflow design. They should not be interpreted as real user-preference performance without evaluation on real interaction data, stronger validation, monitoring, and product review.
 
 ---
-     
+              
 ## Table of Contents
 
 - [Project Overview](#project-overview)
