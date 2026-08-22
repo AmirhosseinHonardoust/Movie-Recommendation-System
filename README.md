@@ -11,7 +11,7 @@
 [![CI](https://github.com/AmirhosseinHonardoust/Movie-Recommendation-System/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/AmirhosseinHonardoust/Movie-Recommendation-System/actions/workflows/ci.yml)
 
 </div>
-                                                                            
+                                                                      
 A production-minded movie recommendation workflow for comparing **content-based filtering**, **collaborative filtering**, **hybrid ranking**, **simple baselines**, **alpha-sweep evaluation**, and **structured recommendation outputs** on a synthetic ratings dataset.
 
 > **Important:** This project is a **portfolio and research demo**, not a production recommendation system.
