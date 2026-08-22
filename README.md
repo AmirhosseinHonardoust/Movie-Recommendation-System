@@ -1,6 +1,7 @@
 <div align="center">
 
 # Movie Recommendation System
+<img width="1672" height="941" alt="Movie-Recommendation-System" src="https://github.com/user-attachments/assets/b7132053-381b-4e7e-815b-b67d049bedf2" />
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-Recommenders-green)
